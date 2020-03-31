@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Build A Cave</title>
+		<style>
+			html {
+				height: 100vh;
+			}
+			body {
+				height: 100vh;
+				background-color: #000000;
+			}
+			table {
+				border-spacing: 0px;
+			}
+			tr {
+				padding: 0px;
+			}
+			td {
+				height: 5px;
+				width: 5px;
+				padding: 0px;
+			}
+			.floor {
+				background-color: #888888;
+			}
+			.air {
+				background-color: #000000;
+			}
+			.roof {
+				background-color: #888888;
+			}
+		</style>
+	</head>
+	<body>
+		<button onclick = "newCave()">New Cave</button>
+		<button onclick = "changeSmoothness()" id = "smooth">Smoothness: Spiky</button>
+		<button onclick = "changeClumping()" id = "clump">Clumping: Minimal Clumping</button>
+		<table>
+			<tbody id = "this">
+			</tbody>
+		</table>
+		<script defer charset = "utf-8" type = "text/javascript">
+			var newRow = document.createElement("tr");
+			var newPixel = document.createElement("td");
+			var elements = ["floor", "air", "roof", "air"];
+			var clumping = ["Minimal Clumping", "Slight Clumping", "Normal Clumping", "Maximum Clumping"];
+			var clumpingValues = [0.9, 0.6, 0.4, 0.2];
+			var clumpvl = 0;
+			var smoothness = ["Spiky", "Minimal Smoothness", "Smooth", "Maximum Smoothness"];
+			var smoothnessValues = [0, 10, 30, 60];
+			var smoothvl = 0;
+			for (var r = 0; r < 120; r++) {
+				newRow.id = r.toString() + "r";
+				document.getElementById("this").appendChild(newRow.cloneNode(true));
+				for (var d = 0; d < 241; d++) {
+					newPixel.id = r.toString() + "d" + d.toString();
+					newPixel.className = "air";
+					document.getElementById(r.toString() + "r").appendChild(newPixel.cloneNode(true));
+				}
+			}
+			function changeSmoothness () {
+				smoothvl++;
+				smoothvl = smoothvl%4;
+				document.getElementById("smooth").innerHTML = "Smoothness: " + smoothness[smoothvl];
+			}
+			function changeClumping () {
+				clumpvl++;
+				clumpvl = clumpvl%4;
+				document.getElementById("clump").innerHTML = "Clumping: " + clumping[clumpvl];
+			}
+			function newCave () {
+				for (var r = 0; r < 120; r++) {
+					for (var d = 0; d < 241; d++) {
+						document.getElementById(r.toString() + "d" + d.toString()).className = elements[Math.floor(Math.random()*elements.length)];
+					}
+				}
+				for (var i = 0; i < 120; i++) {
+					simulateRoof();
+					simulateFloor();
+				}
+				for (var i = 0; i < smoothnessValues[smoothvl]; i++) {
+					simulateFloorSmooth();
+					simulateFloor();
+					simulateFloor();
+					simulateFloor();
+					simulateRoofSmooth();
+					simulateRoof();
+					simulateRoof();
+					simulateRoof();
+				}
+			}
+			function simulateFloor () {
+				let floorPixels = document.getElementsByClassName("floor");
+				let floorArray = Array.prototype.slice.call(floorPixels);
+				floorArray.reverse();
+				floorArray.forEach(function (pixel) {
+					let row = parseInt(pixel.id);
+					let column = parseInt(pixel.id.split("d")[1]);
+					if (row < 119 && document.getElementById((row + 1).toString()+("d")+column.toString()).className == "air") {
+						document.getElementById((row + 1).toString()+"d"+column.toString()).className = "floor";
+						pixel.className = "air";
+					}
+				});
+			}
+			function simulateFloorSmooth () {
+				let floorPixels = document.getElementsByClassName("floor");
+				let floorArray = Array.prototype.slice.call(floorPixels);
+				floorArray.forEach(function (pixel) {
+					let row = parseInt(pixel.id);
+					let column = parseInt(pixel.id.split("d")[1]);
+					let dir = Math.round(Math.random())*2-1;
+					let wall = (dir*120 + 120);
+						if (column != 0 && column != 240) {
+							if ((document.getElementById(row.toString()+"d"+(column+1).toString()).className == "air" && document.getElementById(row.toString()+"d"+(column-1)).className == "air") || Math.random() < clumpingValues[clumpvl]) {
+								if (column != wall && document.getElementById(row.toString()+"d"+(column+dir).toString()).className == "air" ) {
+									document.getElementById(row.toString()+"d"+(column+dir).toString()).className = "floor";
+									pixel.className = "air";
+								} else if (column != (240-wall) && document.getElementById(row.toString()+"d"+(column-dir)).className == "air") {
+									document.getElementById(row.toString()+"d"+(column-dir).toString()).className = "floor";
+									pixel.className = "air";
+								}
+							}
+						} else if (column == 0) {
+							if (Math.random() < clumpingValues[clumpvl]) {
+								if (document.getElementById(row.toString()+"d1").className == "air") {
+									document.getElementById(row.toString()+"d1").className = "floor";
+									pixel.className = "air";
+								}
+							}
+						} else if (column == 240) {
+							if (Math.random() < clumpingValues[clumpvl]) {
+								if (document.getElementById(row.toString()+"d179").className == "air") {
+									document.getElementById(row.toString()+"d179").className = "floor";
+									pixel.className = "air";
+								}
+							}
+						}
+				});
+			}
+			function simulateRoof () {
+				let roofPixels = document.getElementsByClassName("roof");
+				let roofArray = Array.prototype.slice.call(roofPixels);
+				roofArray.forEach(function (pixel) {
+					let row = parseInt(pixel.id);
+					let column = parseInt(pixel.id.split("d")[1]);
+					if (row > 0 && document.getElementById((row - 1).toString()+("d")+column.toString()).className != "roof") {
+						pixel.className = document.getElementById((row - 1).toString()+"d"+column.toString()).className;
+						document.getElementById((row - 1).toString()+"d"+column.toString()).className = "roof";
+					}
+				});
+			}
+			function simulateRoofSmooth () {
+				let roofPixels = document.getElementsByClassName("roof");
+				let roofArray = Array.prototype.slice.call(roofPixels);
+				roofArray.forEach(function (pixel) {
+					let row = parseInt(pixel.id);
+					let column = parseInt(pixel.id.split("d")[1]);
+					let dir = Math.round(Math.random())*2-1;
+					let wall = (dir*120 + 120);
+					if (column != 0 && column != 240) {
+						if ((document.getElementById(row.toString()+"d"+(column+1).toString()).className == "air" && document.getElementById(row.toString()+"d"+(column-1)).className == "air") || Math.random() < clumpingValues[clumpvl]) {
+							if (column != wall && document.getElementById(row.toString()+"d"+(column+dir).toString()).className == "air" ) {
+								document.getElementById(row.toString()+"d"+(column+dir).toString()).className = "roof";
+								pixel.className = "air";
+							} else if (column != (240-wall) && document.getElementById(row.toString()+"d"+(column-dir)).className == "air") {
+								document.getElementById(row.toString()+"d"+(column-dir).toString()).className = "roof";
+								pixel.className = "roof";
+							}
+						}
+					} else if (column == 0) {
+						if (Math.random() < clumpingValues[clumpvl]) {
+							if (document.getElementById(row.toString()+"d1").className == "air") {
+								document.getElementById(row.toString()+"d1").className = "roof";
+								pixel.className = "air";
+							}
+						}
+					} else if (column == 240) {
+						if (Math.random() < clumpingValues[clumpvl]) {
+							if (document.getElementById(row.toString()+"d179").className == "air") {
+								document.getElementById(row.toString()+"d179").className = "roof";
+								pixel.className = "air";
+							}
+						}
+					}
+				});
+			}
+		</script>
+	</body>
+</html>
